@@ -73,7 +73,7 @@ jobs:
       run: rustup update stable --no-self-update && rustup default stable
     - run: rustup target add wasm32-wasip1 wasm32-wasip2
 
-    - run: rustup target add wasm32-unknown-unknown
+    - run: rustup target add wasm32-unknown-unknown wasm32v1-none
       if: matrix.lang == 'rust'
 
     - uses: ./.github/actions/install-wasi-sdk
@@ -170,6 +170,8 @@ jobs:
       run: rustup target add wasm32-unknown-unknown
     - name: Install wasm32-wasip1 target
       run: rustup target add wasm32-wasip1
+    - name: Install wasm32v1-none target
+      run: rustup target add wasm32v1-none
 
     # Verify the output of the `./ci/rebuild-libwit-bindgen-cabi.sh` script is
     # up-to-date.
