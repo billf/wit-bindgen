@@ -182,7 +182,7 @@ path = 'lib.rs'
             cmd.env("CARGO_MANIFEST_DIR", manifest_dir)
                 .arg(path)
                 .arg("-o")
-                .arg(&output);
+                .arg(output);
             for flag in Vec::from(config.rustflags.clone()) {
                 cmd.arg(flag);
             }
@@ -300,15 +300,15 @@ impl Runner<'_> {
         .arg("-Dwarnings")
         .arg("-Cdebuginfo=1");
         for dep in state.wit_bindgen_deps.iter() {
-            cmd.arg(&format!("-Ldependency={}", dep.display()));
+            cmd.arg(format!("-Ldependency={}", dep.display()));
         }
         cmd
     }
 
     fn produces_component(&self) -> bool {
-        match self.opts.rust.rust_target.as_str() {
-            "wasm32-unknown-unknown" | "wasm32-wasi" | "wasm32-wasip1" => false,
-            _ => true,
-        }
+        !matches!(
+            self.opts.rust.rust_target.as_str(),
+            "wasm32-unknown-unknown" | "wasm32-wasi" | "wasm32-wasip1" | "wasm32v1-none",
+        )
     }
 }

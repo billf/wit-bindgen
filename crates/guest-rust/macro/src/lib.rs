@@ -293,7 +293,7 @@ impl Config {
             };
             std::fs::write(&path, contents.as_bytes()).unwrap();
 
-            src = format!("include!({path:?});");
+            src = format!("::core::include!({path:?});");
         }
         let mut contents = src.parse::<TokenStream>().unwrap();
 
@@ -302,7 +302,7 @@ impl Config {
         for file in self.files.iter() {
             contents.extend(
                 format!(
-                    "const _: &[u8] = include_bytes!(r#\"{}\"#);\n",
+                    "const _: &[u8] = ::core::include_bytes!(r#\"{}\"#);\n",
                     file.display()
                 )
                 .parse::<TokenStream>()

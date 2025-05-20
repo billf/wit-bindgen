@@ -532,7 +532,7 @@ pub unsafe fn cabi_dealloc(ptr: *mut u8, size: usize, align: usize) {
                 self.src.push_str(
                     "\
 pub unsafe fn string_lift(bytes: Vec<u8>) -> String {
-    if cfg!(debug_assertions) {
+    if ::core::cfg!(debug_assertions) {
         String::from_utf8(bytes).unwrap()
     } else {
         unsafe { String::from_utf8_unchecked(bytes) }
@@ -546,10 +546,10 @@ pub unsafe fn string_lift(bytes: Vec<u8>) -> String {
                 self.src.push_str(
                     "\
 pub unsafe fn invalid_enum_discriminant<T>() -> T {
-    if cfg!(debug_assertions) {
-        panic!(\"invalid enum discriminant\")
+    if ::core::cfg!(debug_assertions) {
+        ::core::panic!(\"invalid enum discriminant\")
     } else {
-        unsafe { core::hint::unreachable_unchecked() }
+        unsafe { ::core::hint::unreachable_unchecked() }
     }
 }
                     ",
@@ -560,8 +560,8 @@ pub unsafe fn invalid_enum_discriminant<T>() -> T {
                 self.src.push_str(
                     "\
 pub unsafe fn char_lift(val: u32) -> char {
-    if cfg!(debug_assertions) {
-        core::char::from_u32(val).unwrap()
+    if ::core::cfg!(debug_assertions) {
+        ::core::char::from_u32(val).unwrap()
     } else {
         unsafe { core::char::from_u32_unchecked(val) }
     }
@@ -574,11 +574,11 @@ pub unsafe fn char_lift(val: u32) -> char {
                 self.src.push_str(
                     "\
 pub unsafe fn bool_lift(val: u8) -> bool {
-    if cfg!(debug_assertions) {
+    if ::core::cfg!(debug_assertions) {
         match val {
             0 => false,
             1 => true,
-            _ => panic!(\"invalid bool discriminant\"),
+            _ => ::core::panic!(\"invalid bool discriminant\"),
         }
     } else {
         val != 0
@@ -664,7 +664,7 @@ pub unsafe trait WasmResource {
 impl<T: WasmResource> Resource<T> {
     #[doc(hidden)]
     pub unsafe fn from_handle(handle: u32) -> Self {
-        debug_assert!(handle != 0 && handle != u32::MAX);
+        core::debug_assert!(handle != 0 && handle != u32::MAX);
         Self {
             handle: AtomicU32::new(handle),
             _marker: marker::PhantomData,
@@ -702,7 +702,7 @@ impl<T: WasmResource> fmt::Debug for Resource<T> {
     }
 }
 
-impl<T: WasmResource> Drop for Resource<T> {
+impl<T: WasmResource> core::ops::Drop for Resource<T> {
     fn drop(&mut self) {
         unsafe {
             match self.handle.load(Relaxed) {
@@ -1343,7 +1343,7 @@ impl WorldGenerator for RustWasm {
         );
 
         if self.opts.stubs {
-            self.src.push_str("\n#[derive(Debug)]\npub struct Stub;\n");
+            self.src.push_str("\n#[derive(core::fmt::Debug)]\npub struct Stub;\n");
         }
 
         let mut src = mem::take(&mut self.src);

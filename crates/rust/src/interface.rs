@@ -1930,12 +1930,19 @@ unsafe fn call_import(_params: Self::ParamsLower, _results: *mut u8) -> u32 {{
             }
             if info.is_copy() {
                 self.push_str("#[repr(C)]\n");
-                derives.extend(["Copy", "Clone"].into_iter().map(|s| s.to_string()));
+                derives.remove("Clone");
+                derives.remove("Copy");
+                derives.extend(
+                    ["::core::marker::Copy", "::core::clone::Clone"]
+                        .into_iter()
+                        .map(|s| s.to_string()),
+                );
             } else if info.is_clone() {
-                derives.insert("Clone".to_string());
+                derives.remove("Clone");
+                derives.insert("::core::clone::Clone".to_string());
             }
             if !derives.is_empty() {
-                self.push_str("#[derive(");
+                self.push_str("#[::core::prelude::v1::derive(");
                 self.push_str(&derives.into_iter().collect::<Vec<_>>().join(", "));
                 self.push_str(")]\n")
             }
@@ -1990,7 +1997,7 @@ unsafe fn call_import(_params: Self::ParamsLower, _results: *mut u8) -> u32 {{
                 if self.r#gen.opts.std_feature {
                     self.push_str("#[cfg(feature = \"std\")]\n");
                 }
-                self.push_str("impl std::error::Error for ");
+                self.push_str("impl ::core::error::Error for ");
                 self.push_str(&name);
                 self.push_str(" {}\n");
             }
@@ -2094,7 +2101,7 @@ unsafe fn call_import(_params: Self::ParamsLower, _results: *mut u8) -> u32 {{
                 }
                 self.push_str("impl");
                 self.print_generics(mode.lifetime);
-                self.push_str(" std::error::Error for ");
+                self.push_str(" ::core::error::Error for ");
                 self.push_str(&name);
                 self.print_generics(mode.lifetime);
                 self.push_str(" {}\n");
@@ -2156,7 +2163,7 @@ unsafe fn call_import(_params: Self::ParamsLower, _results: *mut u8) -> u32 {{
             self.rustdoc(docs);
             self.push_str(&format!("pub type {}", name));
             self.print_generics(mode.lifetime);
-            self.push_str("= Result<");
+            self.push_str("= ::core::result::Result<");
             self.print_optional_ty(result.ok.as_ref(), mode);
             self.push_str(",");
             self.print_optional_ty(result.err.as_ref(), mode);
@@ -2196,9 +2203,16 @@ unsafe fn call_import(_params: Self::ParamsLower, _results: *mut u8) -> u32 {{
             derives.extend(self.r#gen.opts.additional_derive_attributes.to_vec());
         }
         derives.extend(
-            ["Clone", "Copy", "PartialEq", "Eq", "PartialOrd", "Ord"]
-                .into_iter()
-                .map(|s| s.to_string()),
+            [
+                "::core::clone::Clone",
+                "::core::marker::Copy",
+                "::core::cmp::PartialEq",
+                "::core::cmp::Eq",
+                "::core::cmp::PartialOrd",
+                "::core::cmp::Ord",
+            ]
+            .into_iter()
+            .map(|s| s.to_string()),
         );
         self.push_str("#[derive(");
         self.push_str(&derives.into_iter().collect::<Vec<_>>().join(", "));
@@ -2276,7 +2290,7 @@ unsafe fn call_import(_params: Self::ParamsLower, _results: *mut u8) -> u32 {{
             if self.r#gen.opts.std_feature {
                 self.push_str("#[cfg(feature = \"std\")]\n");
             }
-            self.push_str("impl std::error::Error for ");
+            self.push_str("impl ::core::error::Error for ");
             self.push_str(&name);
             self.push_str(" {}\n");
         } else {
@@ -2556,7 +2570,7 @@ impl<'a> wit_bindgen_core::InterfaceGenerator<'a> for InterfaceGenerator<'a> {
             uwriteln!(
                 self.src,
                 r#"
-                    #[derive(Debug)]
+                    #[derive(::core::fmt::Debug)]
                     #[repr(transparent)]
                     pub struct {camel} {{
                         handle: {resource}<{camel}>,
@@ -2660,7 +2674,7 @@ impl {camel} {{
         use core::any::TypeId;
         static mut LAST_TYPE: Option<TypeId> = None;
         unsafe {{
-            assert!(!cfg!(target_feature = "atomics"));
+            assert!(!core::cfg!(target_feature = "atomics"));
             let id = TypeId::of::<T>();
             match LAST_TYPE {{
                 Some(ty) => assert!(ty == id, "cannot use two types with this resource type"),
@@ -2806,13 +2820,13 @@ impl<'a> {camel}Borrow<'a>{{
                 impl {name} {{
                     #[doc(hidden)]
                     pub unsafe fn _lift(val: {repr}) -> {name} {{
-                        if !cfg!(debug_assertions) {{
+                        if !core::cfg!(debug_assertions) {{
                             return unsafe {{ ::core::mem::transmute(val) }};
                         }}
 
                         match val {{
                             {cases}
-                            _ => panic!("invalid enum discriminant"),
+                            _ => ::core::panic!("invalid enum discriminant"),
                         }}
                     }}
                 }}
@@ -2939,14 +2953,14 @@ impl<'a, 'b> wit_bindgen_core::AnonymousTypeGenerator<'a> for AnonTypeGenerator<
     }
 
     fn anonymous_type_option(&mut self, _id: TypeId, t: &Type, _docs: &Docs) {
-        self.interface.push_str("Option<");
+        self.interface.push_str("::core::option::Option<");
         let mode = self.interface.filter_mode_preserve_top(t, self.mode);
         self.interface.print_ty(t, mode);
         self.interface.push_str(">");
     }
 
     fn anonymous_type_result(&mut self, _id: TypeId, r: &Result_, _docs: &Docs) {
-        self.interface.push_str("Result<");
+        self.interface.push_str("::core::result::Result<");
         self.interface.print_optional_ty(r.ok.as_ref(), self.mode);
         self.interface.push_str(",");
         self.interface.print_optional_ty(r.err.as_ref(), self.mode);

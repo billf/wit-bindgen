@@ -225,7 +225,7 @@ impl Bindgen for FunctionBindgen<'_, '_> {
             // If the size requested is 0 then we know it won't be written to so
             // hand out a null pointer. This can happen with async for example
             // when the params or results are zero-sized.
-            uwrite!(self.src, "let ptr{tmp} = core::ptr::null_mut::<u8>();");
+            uwrite!(self.src, "let ptr{tmp} = ::core::ptr::null_mut::<u8>();");
         } else if self.r#gen.in_import {
             // Import return areas are stored on the stack since this stack
             self.import_return_pointer_area_size = self.import_return_pointer_area_size.max(size);
@@ -624,8 +624,8 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                 let err_binding = if result.err.is_some() { "e" } else { "_" };
                 self.push_str(&format!(
                     "match {operand} {{
-                        Ok({ok_binding}) => {{ {ok} }},
-                        Err({err_binding}) => {{ {err} }},
+                        ::core::result::Result::Ok({ok_binding}) => {{ {ok} }},
+                        ::core::result::Result::Err({err_binding}) => {{ {err} }},
                     }};"
                 ));
             }
@@ -638,11 +638,11 @@ impl Bindgen for FunctionBindgen<'_, '_> {
                     "match {operand} {{
                         0 => {{
                             let e = {ok};
-                            Ok(e)
+                            ::core::result::Result::Ok(e)
                         }}
                         1 => {{
                             let e = {err};
-                            Err(e)
+                            ::core::result::Result::Err(e)
                         }}
                         _ => {invalid}(),
                     }}",
